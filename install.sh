@@ -7,7 +7,8 @@ if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java" ]; then
 else
     for candidate in \
         /opt/homebrew/opt/openjdk/bin/java \
-        /opt/homebrew/opt/openjdk@21/bin/java; do
+        /opt/homebrew/opt/openjdk@21/bin/java \
+        /opt/homebrew/opt/openjdk@25/bin/java; do
         if [ -x "$candidate" ]; then
             export JAVA_HOME="$(dirname "$(dirname "$candidate")")"
             echo "Detected Java at: $JAVA_HOME"

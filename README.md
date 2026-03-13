@@ -77,16 +77,21 @@ gradle wrapper --gradle-version 8.5
 chmod +x ./gradlew
 ./gradlew build
 
+# macOS — if your system Java isn't 21+, point to Homebrew's JDK explicitly:
+JAVA_HOME=/opt/homebrew/opt/openjdk ./gradlew build
+
 # Windows
 gradlew.bat build
 ```
+
+The compiled JAR lands in `build/libs/` named after the version in `gradle.properties` (e.g. `playergamespaperplugin-0.2.0.jar`).
 
 ### 4. Install
 
 Copy the compiled JAR to your server:
 
 ```bash
-cp build/libs/playergamespaperplugin-0.1.0.jar /path/to/your/server/plugins/
+cp build/libs/playergamespaperplugin-0.2.0.jar /path/to/your/server/plugins/
 ```
 
 Restart or reload the server. Done!

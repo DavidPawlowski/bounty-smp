@@ -74,6 +74,14 @@ public class BountyManager implements Listener {
             .color(NamedTextColor.RED));
         target.sendMessage(Component.text("§c§lWARNING: §e" + player.getName() + " §chas been assigned to hunt you!")
             .color(NamedTextColor.RED));
+
+        // Also remind the target who THEY are hunting
+        if (targetBp.getTargetId() != null) {
+            Player theirTarget = plugin.getServer().getPlayer(targetBp.getTargetId());
+            if (theirTarget != null) {
+                target.sendMessage(Component.text("§cYour target is: §e" + theirTarget.getName()));
+            }
+        }
     }
 
     /**

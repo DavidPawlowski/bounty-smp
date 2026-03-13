@@ -59,15 +59,13 @@ public class ChargeBowManager implements Listener {
     // Per-player charge counter (UUID → current charge 0-4)
     private final Map<UUID, Integer> chargeCounters = new HashMap<>();
 
-    // ── Recipe configuration (defaults) ──
-    // Shape:  B B
-    //         BEB
-    //          S
-    // B = ingredient (default BONE), E = core (default ENDER_EYE), S = handle (default STICK)
-    private char[] recipeChars = new char[] {'B', ' ', 'B', 'B', 'E', 'B', ' ', 'S', ' '};
-    private Material recipeIngredient = Material.BONE;
-    private Material recipeCore = Material.ENDER_EYE;
-    private Material recipeHandle = Material.STICK;
+    // ── Recipe configuration (9 slots, index 0–8 = top-left to bottom-right) ──
+    // Default shape:  B_B / BEB / _S_
+    private Material[] slots = new Material[]{
+        Material.BONE, null,            Material.BONE,
+        Material.BONE, Material.ENDER_EYE, Material.BONE,
+        null,          Material.STICK,  null
+    };
 
     public ChargeBowManager(PGPlugin plugin) {
         this.plugin = plugin;
@@ -106,65 +104,51 @@ public class ChargeBowManager implements Listener {
     // ─────────────────────────── Recipe management ──────────────────────
 
     private void registerRecipe() {
-        // Remove old recipe if present
-        Recipe existing = plugin.getServer().getRecipe(currentRecipeKey);
-        if (existing != null) {
-            plugin.getServer().removeRecipe(currentRecipeKey);
+        plugin.getServer().removeRecipe(currentRecipeKey);
+        ShapedRecipe recipe = new ShapedRecipe(currentRecipeKey, createChargeBow());
+
+        Map<Material, Character> charMap = new LinkedHashMap<>();
+        char nextChar = 'A';
+        char[][] grid = new char[3][3];
+        for (int i = 0; i < 9; i++) {
+            Material mat = slots[i];
+            if (mat == null) {
+                grid[i / 3][i % 3] = ' ';
+            } else {
+                charMap.putIfAbsent(mat, nextChar++);
+                grid[i / 3][i % 3] = charMap.get(mat);
+            }
         }
 
-        ShapedRecipe recipe = new ShapedRecipe(currentRecipeKey, createChargeBow());
-        recipe.shape(
-            new String(recipeChars, 0, 3),
-            new String(recipeChars, 3, 3),
-            new String(recipeChars, 6, 3)
-        );
-
-        if (recipeIngredient != null) recipe.setIngredient('B', recipeIngredient);
-        if (recipeCore      != null) recipe.setIngredient('E', recipeCore);
-        if (recipeHandle     != null) recipe.setIngredient('S', recipeHandle);
-
+        recipe.shape(new String(grid[0]), new String(grid[1]), new String(grid[2]));
+        charMap.forEach((mat, ch) -> recipe.setIngredient(ch, mat));
         plugin.getServer().addRecipe(recipe);
-        plugin.getLogger().info("Charge Bow recipe registered: " + recipeIngredient + " + " + recipeCore + " + " + recipeHandle);
+        plugin.getLogger().info("Charge Bow recipe registered");
     }
 
     /** Called from the command handler to update the recipe at runtime. */
-    public boolean setRecipe(String ingredient, String core, String handle) {
-        try {
-            Material ingMat    = Material.getMaterial(ingredient.toUpperCase());
-            Material coreMat   = Material.getMaterial(core.toUpperCase());
-            Material handleMat = Material.getMaterial(handle.toUpperCase());
-
-            if (ingMat == null || coreMat == null || handleMat == null) return false;
-
-            this.recipeIngredient = ingMat;
-            this.recipeCore       = coreMat;
-            this.recipeHandle     = handleMat;
-
-            registerRecipe();
-            plugin.getLogger().info("Charge Bow recipe changed to: " + ingMat + " + " + coreMat + " + " + handleMat);
-            return true;
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to set Charge Bow recipe: " + e.getMessage());
-            return false;
+    public boolean setRecipe(String[] slotNames) {
+        if (slotNames.length != 9) return false;
+        Material[] newSlots = new Material[9];
+        for (int i = 0; i < 9; i++) {
+            if (slotNames[i].equalsIgnoreCase("AIR") || slotNames[i].equalsIgnoreCase("NONE")) {
+                newSlots[i] = null;
+            } else {
+                newSlots[i] = Material.getMaterial(slotNames[i].toUpperCase());
+                if (newSlots[i] == null) return false;
+            }
         }
+        this.slots = newSlots;
+        registerRecipe();
+        return true;
     }
 
     /** Human-readable recipe info for the /playergames chargebow command. */
     public String getRecipeInfo() {
-        return "Current recipe: " + recipeIngredient + " + " + recipeCore + " + " + recipeHandle;
-    }
-
-    // ── Getters/setters used by PGPlugin for config persistence ──
-
-    public Material getRecipeIngredient() { return recipeIngredient; }
-    public Material getRecipeCore()       { return recipeCore; }
-    public Material getRecipeHandle()     { return recipeHandle; }
-
-    public void loadRecipeFromConfig(Material ingredient, Material core, Material handle) {
-        this.recipeIngredient = ingredient;
-        this.recipeCore       = core;
-        this.recipeHandle     = handle;
-        registerRecipe();
+        String[] names = new String[9];
+        for (int i = 0; i < 9; i++) names[i] = slots[i] == null ? "AIR" : slots[i].name();
+        return String.format("Row1: %s %s %s | Row2: %s %s %s | Row3: %s %s %s",
+            names[0], names[1], names[2], names[3], names[4], names[5], names[6], names[7], names[8]);
     }
 
     // ─────────────────────────── Event handlers ─────────────────────────

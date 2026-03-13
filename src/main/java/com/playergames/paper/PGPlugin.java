@@ -2,16 +2,15 @@ package com.playergames.paper;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import java.util.Arrays;
 
 /**
  * Main plugin class for Bounty SMP.
@@ -91,41 +90,8 @@ public final class PGPlugin extends JavaPlugin implements CommandExecutor {
     //  Config.yml persistence for recipes
     // ════════════════════════════════════════════════════════════════════
 
-    /**
-     * Load Charge Bow recipe values from config.yml.
-     * If the keys don't exist yet the current defaults are kept.
-     */
     private void loadRecipesFromConfig() {
-        FileConfiguration cfg = getConfig();
-
-        // ── Charge Bow recipe ──
-        String bowIng    = cfg.getString("chargebow.recipe.ingredient");
-        String bowCore   = cfg.getString("chargebow.recipe.core");
-        String bowHandle = cfg.getString("chargebow.recipe.handle");
-
-        if (bowIng != null && bowCore != null && bowHandle != null) {
-            Material ingMat    = Material.getMaterial(bowIng.toUpperCase());
-            Material coreMat   = Material.getMaterial(bowCore.toUpperCase());
-            Material handleMat = Material.getMaterial(bowHandle.toUpperCase());
-
-            if (ingMat != null && coreMat != null && handleMat != null) {
-                chargeBowManager.loadRecipeFromConfig(ingMat, coreMat, handleMat);
-                getLogger().info("Loaded Charge Bow recipe from config: " + ingMat + " + " + coreMat + " + " + handleMat);
-            } else {
-                getLogger().warning("Invalid Charge Bow recipe materials in config.yml — using defaults.");
-            }
-        }
-    }
-
-    /**
-     * Save the current Charge Bow recipe to config.yml so it persists across restarts.
-     */
-    private void saveChargeBowRecipeToConfig() {
-        FileConfiguration cfg = getConfig();
-        cfg.set("chargebow.recipe.ingredient", chargeBowManager.getRecipeIngredient().name());
-        cfg.set("chargebow.recipe.core",       chargeBowManager.getRecipeCore().name());
-        cfg.set("chargebow.recipe.handle",     chargeBowManager.getRecipeHandle().name());
-        saveConfig();
+        // Config-based recipe persistence was removed; recipes use in-memory defaults.
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -178,30 +144,21 @@ public final class PGPlugin extends JavaPlugin implements CommandExecutor {
                 // Show current recipe
                 sender.sendMessage(Component.text("§d--- Charge Bow Recipe ---"));
                 sender.sendMessage(Component.text(chargeBowManager.getRecipeInfo()));
-                sender.sendMessage(Component.text("§eUsage: /playergames chargebow set <ingredient> <core> <handle>"));
+                sender.sendMessage(Component.text("§eUsage: /playergames chargebow set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
                 return true;
             }
 
-            if (args.length == 5 && args[1].equalsIgnoreCase("set")) {
-                String ingredient = args[2];
-                String core       = args[3];
-                String handle     = args[4];
-
-                if (chargeBowManager.setRecipe(ingredient, core, handle)) {
-                    // Persist to config.yml so it survives restarts
-                    saveChargeBowRecipeToConfig();
-
-                    sender.sendMessage(Component.text("§aRecipe updated! §eNew recipe: " + ingredient + " + " + core + " + " + handle));
-                    getServer().broadcast(Component.text(
-                        "§d§lThe Charge Bow recipe has been changed! §eNew: " + ingredient + " + " + core + " + " + handle
-                    ));
+            if (args.length == 11 && args[1].equalsIgnoreCase("set")) {
+                if (chargeBowManager.setRecipe(Arrays.copyOfRange(args, 2, 11))) {
+                    sender.sendMessage(Component.text("§aCharge Bow recipe updated! " + chargeBowManager.getRecipeInfo()));
+                    getServer().broadcast(Component.text("§d§lThe Charge Bow recipe has been changed!"));
                 } else {
                     sender.sendMessage(Component.text("§cFailed to set recipe. Check material names."));
                 }
                 return true;
             }
 
-            sender.sendMessage(Component.text("§eUsage: /playergames chargebow set <ingredient> <core> <handle>"));
+            sender.sendMessage(Component.text("§eUsage: /playergames chargebow set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
             return true;
         }
 
@@ -219,24 +176,21 @@ public final class PGPlugin extends JavaPlugin implements CommandExecutor {
             if (args.length == 1) {
                 sender.sendMessage(Component.text("§6--- Charged Mace Recipe ---"));
                 sender.sendMessage(Component.text(chargedMaceManager.getRecipeInfo()));
-                sender.sendMessage(Component.text("§eUsage: /playergames mace set <ingredient> <handle>"));
+                sender.sendMessage(Component.text("§eUsage: /playergames mace set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
                 return true;
             }
 
-            if (args.length == 4 && args[1].equalsIgnoreCase("set")) {
-                String ingredient = args[2];
-                String handle = args[3];
-
-                if (chargedMaceManager.setRecipe(ingredient, handle)) {
-                    sender.sendMessage(Component.text("§aRecipe updated! §eNew recipe: " + ingredient + " + " + handle));
-                    getServer().broadcast(Component.text("§6§lThe Charged Mace recipe has been changed! §eNew: " + ingredient + " + " + handle));
+            if (args.length == 11 && args[1].equalsIgnoreCase("set")) {
+                if (chargedMaceManager.setRecipe(Arrays.copyOfRange(args, 2, 11))) {
+                    sender.sendMessage(Component.text("§aCharged Mace recipe updated! " + chargedMaceManager.getRecipeInfo()));
+                    getServer().broadcast(Component.text("§6§lThe Charged Mace recipe has been changed!"));
                 } else {
                     sender.sendMessage(Component.text("§cFailed to set recipe. Check material names."));
                 }
                 return true;
             }
 
-            sender.sendMessage(Component.text("§eUsage: /playergames mace set <ingredient> <handle>"));
+            sender.sendMessage(Component.text("§eUsage: /playergames mace set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
             return true;
         }
 
@@ -250,24 +204,21 @@ public final class PGPlugin extends JavaPlugin implements CommandExecutor {
             if (args.length == 1) {
                 sender.sendMessage(Component.text("§4--- Vampire Sword Recipe ---"));
                 sender.sendMessage(Component.text(vampireSwordManager.getRecipeInfo()));
-                sender.sendMessage(Component.text("§eUsage: /playergames vampire set <material> <handle>"));
+                sender.sendMessage(Component.text("§eUsage: /playergames vampire set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
                 return true;
             }
 
-            if (args.length == 4 && args[1].equalsIgnoreCase("set")) {
-                String material = args[2];
-                String handle = args[3];
-
-                if (vampireSwordManager.setRecipe(material, handle)) {
-                    sender.sendMessage(Component.text("§aRecipe updated! §eNew recipe: " + material + " + " + handle));
-                    getServer().broadcast(Component.text("§4§lThe Vampire Sword recipe has been changed! §eNew: " + material + " + " + handle));
+            if (args.length == 11 && args[1].equalsIgnoreCase("set")) {
+                if (vampireSwordManager.setRecipe(Arrays.copyOfRange(args, 2, 11))) {
+                    sender.sendMessage(Component.text("§aVampire Sword recipe updated! " + vampireSwordManager.getRecipeInfo()));
+                    getServer().broadcast(Component.text("§4§lThe Vampire Sword recipe has been changed!"));
                 } else {
                     sender.sendMessage(Component.text("§cFailed to set recipe. Check material names."));
                 }
                 return true;
             }
 
-            sender.sendMessage(Component.text("§eUsage: /playergames vampire set <material> <handle>"));
+            sender.sendMessage(Component.text("§eUsage: /playergames vampire set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
             return true;
         }
 
@@ -281,24 +232,21 @@ public final class PGPlugin extends JavaPlugin implements CommandExecutor {
             if (args.length == 1) {
                 sender.sendMessage(Component.text("§6--- Stun Axe Recipe ---"));
                 sender.sendMessage(Component.text(stunAxeManager.getRecipeInfo()));
-                sender.sendMessage(Component.text("§eUsage: /playergames stunaxe set <ingredient> <handle>"));
+                sender.sendMessage(Component.text("§eUsage: /playergames stunaxe set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
                 return true;
             }
 
-            if (args.length == 4 && args[1].equalsIgnoreCase("set")) {
-                String ingredient = args[2];
-                String handle = args[3];
-
-                if (stunAxeManager.setRecipe(ingredient, handle)) {
-                    sender.sendMessage(Component.text("§aRecipe updated! §eNew recipe: " + ingredient + " + " + handle));
-                    getServer().broadcast(Component.text("§6§lThe Stun Axe recipe has been changed! §eNew: " + ingredient + " + " + handle));
+            if (args.length == 11 && args[1].equalsIgnoreCase("set")) {
+                if (stunAxeManager.setRecipe(Arrays.copyOfRange(args, 2, 11))) {
+                    sender.sendMessage(Component.text("§aStun Axe recipe updated! " + stunAxeManager.getRecipeInfo()));
+                    getServer().broadcast(Component.text("§6§lThe Stun Axe recipe has been changed!"));
                 } else {
                     sender.sendMessage(Component.text("§cFailed to set recipe. Check material names."));
                 }
                 return true;
             }
 
-            sender.sendMessage(Component.text("§eUsage: /playergames stunaxe set <ingredient> <handle>"));
+            sender.sendMessage(Component.text("§eUsage: /playergames stunaxe set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
             return true;
         }
 
@@ -312,25 +260,21 @@ public final class PGPlugin extends JavaPlugin implements CommandExecutor {
             if (args.length == 1) {
                 sender.sendMessage(Component.text("§6--- Thunder Trident Recipe ---"));
                 sender.sendMessage(Component.text(thunderTridentManager.getRecipeInfo()));
-                sender.sendMessage(Component.text("§eUsage: /playergames thundertrident set <ingredient> <core> <handle>"));
+                sender.sendMessage(Component.text("§eUsage: /playergames thundertrident set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
                 return true;
             }
 
-            if (args.length == 5 && args[1].equalsIgnoreCase("set")) {
-                String ingredient = args[2];
-                String core = args[3];
-                String handle = args[4];
-
-                if (thunderTridentManager.setRecipe(ingredient, core, handle)) {
-                    sender.sendMessage(Component.text("§aRecipe updated! §eNew recipe: " + ingredient + " + " + core + " + " + handle));
-                    getServer().broadcast(Component.text("§6§lThe Thunder Trident recipe has been changed! §eNew: " + ingredient + " + " + core + " + " + handle));
+            if (args.length == 11 && args[1].equalsIgnoreCase("set")) {
+                if (thunderTridentManager.setRecipe(Arrays.copyOfRange(args, 2, 11))) {
+                    sender.sendMessage(Component.text("§aThunder Trident recipe updated! " + thunderTridentManager.getRecipeInfo()));
+                    getServer().broadcast(Component.text("§6§lThe Thunder Trident recipe has been changed!"));
                 } else {
                     sender.sendMessage(Component.text("§cFailed to set recipe. Check material names."));
                 }
                 return true;
             }
 
-            sender.sendMessage(Component.text("§eUsage: /playergames thundertrident set <ingredient> <core> <handle>"));
+            sender.sendMessage(Component.text("§eUsage: /playergames thundertrident set <s1> <s2> <s3> <s4> <s5> <s6> <s7> <s8> <s9>"));
             return true;
         }
 

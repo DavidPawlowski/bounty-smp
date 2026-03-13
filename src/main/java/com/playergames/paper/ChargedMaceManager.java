@@ -16,6 +16,7 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,16 +31,13 @@ public class ChargedMaceManager implements Listener {
     private final Map<UUID, Long> cooldowns = new HashMap<>();
     private NamespacedKey currentRecipeKey;
     
-    // Default recipe: 3 iron ingots in top row, 1 iron ingot in center, 1 stick in bottom center
-    // This is customizable via command
-    private String[] recipeShape = new String[] {
-        "III",
-        " I ",
-        " S "
+    // Default recipe: 3 iron ingots in top row, 1 in middle center, 1 stick in bottom center
+    // Customizable via command (9 slots, index 0–8 = top-left to bottom-right)
+    private Material[] slots = new Material[]{
+        Material.IRON_INGOT, Material.IRON_INGOT, Material.IRON_INGOT,
+        null,                Material.IRON_INGOT, null,
+        null,                Material.STICK,      null
     };
-    private char[] recipeChars = new char[] {'I', 'I', 'I', ' ', 'I', ' ', ' ', 'S', ' '};
-    private Material recipeIngredient = Material.IRON_INGOT;
-    private Material recipeHandle = Material.STICK;
     
     public ChargedMaceManager(PGPlugin plugin) {
         this.plugin = plugin;
@@ -79,61 +77,55 @@ public class ChargedMaceManager implements Listener {
      * Register the crafting recipe
      */
     private void registerRecipe() {
-        // Remove existing recipe if any
-        Recipe existing = plugin.getServer().getRecipe(currentRecipeKey);
-        if (existing != null) {
-            plugin.getServer().removeRecipe(currentRecipeKey);
-        }
-        
-        // Create recipe with customizable shape
+        plugin.getServer().removeRecipe(currentRecipeKey);
         ShapedRecipe recipe = new ShapedRecipe(currentRecipeKey, createChargedMace());
-        
-        // Determine shape based on configuration
-        recipe.shape(new String(recipeChars, 0, 3), 
-                     new String(recipeChars, 3, 3), 
-                     new String(recipeChars, 6, 3));
-        
-        // Set ingredient mappings
-        if (recipeIngredient != null) {
-            recipe.setIngredient('I', recipeIngredient);
-        }
-        if (recipeHandle != null) {
-            recipe.setIngredient('S', recipeHandle);
-        }
-        
-        plugin.getServer().addRecipe(recipe);
-        plugin.getLogger().info("Charged Mace recipe registered with ingredient: " + recipeIngredient);
-    }
-    
-    /**
-     * Change the crafting recipe via command
-     */
-    public boolean setRecipe(String ingredient, String handle) {
-        try {
-            Material ingotMat = Material.getMaterial(ingredient.toUpperCase());
-            Material handleMat = Material.getMaterial(handle.toUpperCase());
-            
-            if (ingotMat == null || handleMat == null) {
-                return false;
+
+        Map<Material, Character> charMap = new LinkedHashMap<>();
+        char nextChar = 'A';
+        char[][] grid = new char[3][3];
+        for (int i = 0; i < 9; i++) {
+            Material mat = slots[i];
+            if (mat == null) {
+                grid[i / 3][i % 3] = ' ';
+            } else {
+                charMap.putIfAbsent(mat, nextChar++);
+                grid[i / 3][i % 3] = charMap.get(mat);
             }
-            
-            this.recipeIngredient = ingotMat;
-            this.recipeHandle = handleMat;
-            
-            registerRecipe();
-            plugin.getLogger().info("Charged Mace recipe changed to: " + ingotMat + " + " + handleMat);
-            return true;
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to set recipe: " + e.getMessage());
-            return false;
         }
+
+        recipe.shape(new String(grid[0]), new String(grid[1]), new String(grid[2]));
+        charMap.forEach((mat, ch) -> recipe.setIngredient(ch, mat));
+        plugin.getServer().addRecipe(recipe);
+        plugin.getLogger().info("Charged Mace recipe registered");
     }
-    
+
+    /**
+     * Change the crafting recipe via command (9 slot names)
+     */
+    public boolean setRecipe(String[] slotNames) {
+        if (slotNames.length != 9) return false;
+        Material[] newSlots = new Material[9];
+        for (int i = 0; i < 9; i++) {
+            if (slotNames[i].equalsIgnoreCase("AIR") || slotNames[i].equalsIgnoreCase("NONE")) {
+                newSlots[i] = null;
+            } else {
+                newSlots[i] = Material.getMaterial(slotNames[i].toUpperCase());
+                if (newSlots[i] == null) return false;
+            }
+        }
+        this.slots = newSlots;
+        registerRecipe();
+        return true;
+    }
+
     /**
      * Get current recipe info
      */
     public String getRecipeInfo() {
-        return "Current recipe: " + recipeIngredient + " + " + recipeHandle;
+        String[] names = new String[9];
+        for (int i = 0; i < 9; i++) names[i] = slots[i] == null ? "AIR" : slots[i].name();
+        return String.format("Row1: %s %s %s | Row2: %s %s %s | Row3: %s %s %s",
+            names[0], names[1], names[2], names[3], names[4], names[5], names[6], names[7], names[8]);
     }
     
     /**

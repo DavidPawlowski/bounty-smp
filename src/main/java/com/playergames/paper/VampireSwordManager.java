@@ -47,15 +47,12 @@ public class VampireSwordManager implements Listener {
      */
     private final Map<UUID, Integer> hitCounters = new HashMap<>();
 
-    // ── Customizable recipe ──
-    private String[] recipeShape = new String[]{
-        " R ",
-        "RBR",
-        " R "
+    // ── Customizable recipe (9 slots, index 0–8 = top-left to bottom-right) ──
+    private Material[] slots = new Material[]{
+        null,             Material.REDSTONE,  null,
+        Material.REDSTONE, Material.BLAZE_ROD, Material.REDSTONE,
+        null,             Material.REDSTONE,  null
     };
-    private char[] recipeChars = new char[]{' ', 'R', ' ', 'R', 'B', 'R', ' ', 'R', ' '};
-    private Material recipeMaterial = Material.REDSTONE;
-    private Material recipeHandle = Material.BLAZE_ROD;
 
     public VampireSwordManager(PGPlugin plugin) {
         this.plugin = plugin;
@@ -68,7 +65,7 @@ public class VampireSwordManager implements Listener {
     /** Create a fresh Vampire Sword ItemStack. */
     @SuppressWarnings("deprecation")
     public ItemStack createVampireSword() {
-        ItemStack sword = new ItemStack(Material.IRON_SWORD);
+        ItemStack sword = new ItemStack(Material.NETHERITE_SWORD);
         ItemMeta meta = sword.getItemMeta();
         if (meta != null) {
             meta.displayName(Component.text("Vampire Sword").color(NamedTextColor.DARK_RED));
@@ -97,7 +94,7 @@ public class VampireSwordManager implements Listener {
 
     /** Check whether an ItemStack is a Vampire Sword. */
     public boolean isVampireSword(ItemStack item) {
-        if (item == null || item.getType() != Material.IRON_SWORD) return false;
+        if (item == null || item.getType() != Material.NETHERITE_SWORD) return false;
         ItemMeta meta = item.getItemMeta();
         if (meta == null || !meta.hasDisplayName()) return false;
         return meta.displayName().toString().contains("Vampire Sword");
@@ -106,45 +103,49 @@ public class VampireSwordManager implements Listener {
     // ─────────────────────────── Recipe management ──────────────────────
 
     private void registerRecipe() {
-        Recipe existing = plugin.getServer().getRecipe(currentRecipeKey);
-        if (existing != null) {
-            plugin.getServer().removeRecipe(currentRecipeKey);
+        plugin.getServer().removeRecipe(currentRecipeKey);
+        ShapedRecipe recipe = new ShapedRecipe(currentRecipeKey, createVampireSword());
+
+        Map<Material, Character> charMap = new LinkedHashMap<>();
+        char nextChar = 'A';
+        char[][] grid = new char[3][3];
+        for (int i = 0; i < 9; i++) {
+            Material mat = slots[i];
+            if (mat == null) {
+                grid[i / 3][i % 3] = ' ';
+            } else {
+                charMap.putIfAbsent(mat, nextChar++);
+                grid[i / 3][i % 3] = charMap.get(mat);
+            }
         }
 
-        ShapedRecipe recipe = new ShapedRecipe(currentRecipeKey, createVampireSword());
-        recipe.shape(
-            new String(recipeChars, 0, 3),
-            new String(recipeChars, 3, 3),
-            new String(recipeChars, 6, 3)
-        );
-
-        if (recipeMaterial != null) recipe.setIngredient('R', recipeMaterial);
-        if (recipeHandle  != null) recipe.setIngredient('B', recipeHandle);
-
+        recipe.shape(new String(grid[0]), new String(grid[1]), new String(grid[2]));
+        charMap.forEach((mat, ch) -> recipe.setIngredient(ch, mat));
         plugin.getServer().addRecipe(recipe);
-        plugin.getLogger().info("Vampire Sword recipe registered with material: " + recipeMaterial);
+        plugin.getLogger().info("Vampire Sword recipe registered");
     }
 
-    public boolean setRecipe(String material, String handle) {
-        try {
-            Material mat       = Material.getMaterial(material.toUpperCase());
-            Material handleMat = Material.getMaterial(handle.toUpperCase());
-            if (mat == null || handleMat == null) return false;
-
-            this.recipeMaterial = mat;
-            this.recipeHandle   = handleMat;
-
-            registerRecipe();
-            plugin.getLogger().info("Vampire Sword recipe changed to: " + mat + " + " + handleMat);
-            return true;
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to set recipe: " + e.getMessage());
-            return false;
+    public boolean setRecipe(String[] slotNames) {
+        if (slotNames.length != 9) return false;
+        Material[] newSlots = new Material[9];
+        for (int i = 0; i < 9; i++) {
+            if (slotNames[i].equalsIgnoreCase("AIR") || slotNames[i].equalsIgnoreCase("NONE")) {
+                newSlots[i] = null;
+            } else {
+                newSlots[i] = Material.getMaterial(slotNames[i].toUpperCase());
+                if (newSlots[i] == null) return false;
+            }
         }
+        this.slots = newSlots;
+        registerRecipe();
+        return true;
     }
 
     public String getRecipeInfo() {
-        return "Current recipe: " + recipeMaterial + " + " + recipeHandle;
+        String[] names = new String[9];
+        for (int i = 0; i < 9; i++) names[i] = slots[i] == null ? "AIR" : slots[i].name();
+        return String.format("Row1: %s %s %s | Row2: %s %s %s | Row3: %s %s %s",
+            names[0], names[1], names[2], names[3], names[4], names[5], names[6], names[7], names[8]);
     }
 
     // ─────────────────────────── Combat handler ─────────────────────────

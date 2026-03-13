@@ -189,7 +189,7 @@ public class ChargedMaceManager implements Listener {
             Player crafter = (Player) event.getWhoClicked();
             
             // Broadcast to all players
-            String announcement = String.format("§6§l★ §e%s §6has crafted a §bCharged Mace§6! §6§l★");
+            String announcement = String.format("§6§l★ §e%s §6has crafted a §bCharged Mace§6! §6§l★", crafter.getName());
             plugin.getServer().broadcast(Component.text(announcement));
             
             plugin.getLogger().info(crafter.getName() + " crafted a Charged Mace");

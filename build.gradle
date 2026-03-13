@@ -1,0 +1,65 @@
+plugins {
+    id 'java'
+}
+
+group = project.findProperty('maven_group')
+version = project.findProperty('plugin_version')
+
+def javaVersion = (project.findProperty('java_version') ?: '21') as int
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:${paper_api_version}"
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = javaVersion
+}
+
+// Sanitize description to be YAML-safe (single line, no special chars, max 100 chars)
+def sanitizeDescription(String desc) {
+    if (desc == null || desc.trim().isEmpty()) {
+        return 'A PlayerGames Paper plugin'
+    }
+    // Replace newlines and tabs with spaces, collapse multiple spaces
+    def sanitized = desc.replaceAll(/[\r\n\t]+/, ' ').replaceAll(/\s{2,}/, ' ').trim()
+    // Remove YAML-problematic characters at start
+    sanitized = sanitized.replaceFirst(/^[:\-\[\]{}&*!|>'"%@`#]/, '')
+    // Remove any remaining problematic characters that could break unquoted YAML
+    sanitized = sanitized.replaceAll(/[:\[\]{}]/, '')
+    // Truncate to 100 characters
+    if (sanitized.length() > 100) {
+        sanitized = sanitized.substring(0, 97) + '...'
+    }
+    return sanitized.trim() ?: 'A PlayerGames Paper plugin'
+}
+
+processResources {
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand(
+            version: project.version,
+            mainClass: project.findProperty('main_class'),
+            description: sanitizeDescription(project.findProperty('plugin_description')),
+            apiVersion: project.findProperty('bukkit_api_version')
+        )
+    }
+}
+
+jar {
+    archiveBaseName.set(project.findProperty('archives_base_name'))
+}

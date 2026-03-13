@@ -1,0 +1,35 @@
+name: BountySMP
+main: com.playergames.paper.PGPlugin
+version: 1.0.0
+api-version: 1.21
+description: Bounty SMP plugin with Charged Mace, Vampire Sword, Stun Axe, Thunder Trident, and Charge Bow weapon systems
+website: https://player.games
+authors:
+  - PlayerGames
+commands:
+  playergames:
+    description: Main PlayerGames command
+    usage: /playergames [mace|vampire|stunaxe|thundertrident|chargebow|reload]
+    permission: playergames.use
+permissions:
+  playergames.use:
+    description: Default permission for playergames command
+    default: true
+  playergames.mace:
+    description: Permission to manage Charged Mace recipes
+    default: op
+  playergames.vampire:
+    description: Permission to manage Vampire Sword recipes
+    default: op
+  playergames.stunaxe:
+    description: Permission to manage Stun Axe recipes
+    default: op
+  playergames.thundertrident:
+    description: Permission to manage Thunder Trident recipes
+    default: op
+  playergames.chargebow:
+    description: Permission to manage Charge Bow recipes
+    default: op
+  playergames.reload:
+    description: Permission to reload recipes from config.yml
+    default: op

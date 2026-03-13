@@ -1,0 +1,21 @@
+# ═══════════════════════════════════════════════════════════
+#  Bounty SMP - Configuration
+# ═══════════════════════════════════════════════════════════
+# Recipe values use Bukkit Material names.
+# Full list: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+#
+# After editing this file, run /playergames reload in-game
+# to apply changes without restarting the server.
+# ═══════════════════════════════════════════════════════════
+
+# ── Charge Bow recipe ──
+# Default shape:
+#   B . B
+#   B E B
+#   . S .
+# B = ingredient, E = core, S = handle
+chargebow:
+  recipe:
+    ingredient: BONE
+    core: ENDER_EYE
+    handle: STICK

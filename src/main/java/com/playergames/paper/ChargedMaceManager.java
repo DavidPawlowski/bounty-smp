@@ -15,8 +15,11 @@ import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import org.bukkit.configuration.ConfigurationSection;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -97,6 +100,58 @@ public class ChargedMaceManager implements Listener {
         charMap.forEach((mat, ch) -> recipe.setIngredient(ch, mat));
         plugin.getServer().addRecipe(recipe);
         plugin.getLogger().info("Charged Mace recipe registered");
+    }
+
+    /**
+     * Load the recipe from a config section using 'shape' and 'ingredients' keys.
+     * shape: list of 3 strings (3 chars each); space = empty slot.
+     * ingredients: map of single char → Bukkit Material name.
+     * Logs a warning and keeps the current recipe if anything is invalid.
+     */
+    public void loadRecipeFromConfig(ConfigurationSection section) {
+        if (section == null) return;
+        List<String> shapeList = section.getStringList("shape");
+        if (shapeList.size() != 3) {
+            plugin.getLogger().warning("[ChargedMace] 'shape' must have exactly 3 rows in config.yml — keeping current recipe.");
+            return;
+        }
+        ConfigurationSection ingSection = section.getConfigurationSection("ingredients");
+        if (ingSection == null) {
+            plugin.getLogger().warning("[ChargedMace] 'ingredients' section missing in config.yml — keeping current recipe.");
+            return;
+        }
+        Map<Character, Material> ingredientMap = new LinkedHashMap<>();
+        for (String key : ingSection.getKeys(false)) {
+            if (key.length() != 1) {
+                plugin.getLogger().warning("[ChargedMace] Ingredient key '" + key + "' must be a single character — keeping current recipe.");
+                return;
+            }
+            String matName = ingSection.getString(key, "");
+            try {
+                ingredientMap.put(key.charAt(0), Material.valueOf(matName.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("[ChargedMace] Invalid material '" + matName + "' for ingredient '" + key + "' — keeping current recipe.");
+                return;
+            }
+        }
+        Material[] newSlots = new Material[9];
+        for (int row = 0; row < 3; row++) {
+            String rowStr = shapeList.get(row);
+            while (rowStr.length() < 3) rowStr += " ";
+            for (int col = 0; col < 3; col++) {
+                char ch = rowStr.charAt(col);
+                if (ch == ' ') {
+                    newSlots[row * 3 + col] = null;
+                } else if (ingredientMap.containsKey(ch)) {
+                    newSlots[row * 3 + col] = ingredientMap.get(ch);
+                } else {
+                    plugin.getLogger().warning("[ChargedMace] Shape character '" + ch + "' has no matching ingredient — keeping current recipe.");
+                    return;
+                }
+            }
+        }
+        this.slots = newSlots;
+        registerRecipe();
     }
 
     /**

@@ -1,6 +1,6 @@
 name: BountySMP
 main: com.playergames.paper.PGPlugin
-version: 0.1.0
+version: 0.3.0
 api-version: 1.21
 description: Bounty SMP plugin with Charged Mace, Vampire Sword, Stun Axe, Thunder Trident, and Charge Bow weapon systems
 website: https://player.games

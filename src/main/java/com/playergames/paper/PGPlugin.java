@@ -91,7 +91,13 @@ public final class PGPlugin extends JavaPlugin implements CommandExecutor {
     // ════════════════════════════════════════════════════════════════════
 
     private void loadRecipesFromConfig() {
-        // Config-based recipe persistence was removed; recipes use in-memory defaults.
+        var cfg = getConfig();
+        chargeBowManager.loadRecipeFromConfig(cfg.getConfigurationSection("chargebow.recipe"));
+        chargedMaceManager.loadRecipeFromConfig(cfg.getConfigurationSection("charged_mace.recipe"));
+        vampireSwordManager.loadRecipeFromConfig(cfg.getConfigurationSection("vampire_sword.recipe"));
+        stunAxeManager.loadRecipeFromConfig(cfg.getConfigurationSection("stun_axe.recipe"));
+        thunderTridentManager.loadRecipeFromConfig(cfg.getConfigurationSection("thunder_trident.recipe"));
+        getLogger().info("Recipes loaded from config.yml");
     }
 
     // ════════════════════════════════════════════════════════════════════

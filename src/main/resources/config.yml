@@ -1,21 +1,99 @@
 # ═══════════════════════════════════════════════════════════
 #  Bounty SMP - Configuration
 # ═══════════════════════════════════════════════════════════
-# Recipe values use Bukkit Material names.
+# Recipe values use Bukkit Material enum names.
 # Full list: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+#
+# Each recipe uses a 3×3 shaped crafting grid defined by:
+#   shape      - Three strings, each 3 characters wide.
+#                Each character maps to an ingredient key below.
+#                A space ' ' means an empty slot.
+#
+#   Slot positions (characters in shape strings):
+#     shape[0] = top row    → positions [col 0] [col 1] [col 2]
+#     shape[1] = middle row → positions [col 0] [col 1] [col 2]
+#     shape[2] = bottom row → positions [col 0] [col 1] [col 2]
+#
+#   ingredients - Maps each single character used in 'shape'
+#                 to a Bukkit Material name.
 #
 # After editing this file, run /playergames reload in-game
 # to apply changes without restarting the server.
 # ═══════════════════════════════════════════════════════════
 
-# ── Charge Bow recipe ──
+# ── Charge Bow ──────────────────────────────────────────────
 # Default shape:
-#   B . B
-#   B E B
-#   . S .
-# B = ingredient, E = core, S = handle
+#   BONE  AIR       BONE
+#   BONE  ENDER_EYE BONE
+#   AIR   STICK     AIR
 chargebow:
   recipe:
-    ingredient: BONE
-    core: ENDER_EYE
-    handle: STICK
+    shape:
+      - "A A"
+      - "ABA"
+      - " C "
+    ingredients:
+      A: BONE
+      B: ENDER_EYE
+      C: STICK
+
+# ── Charged Mace ────────────────────────────────────────────
+# Default shape:
+#   IRON_INGOT IRON_INGOT IRON_INGOT
+#   AIR        IRON_INGOT AIR
+#   AIR        STICK      AIR
+charged_mace:
+  recipe:
+    shape:
+      - "AAA"
+      - " A "
+      - " B "
+    ingredients:
+      A: IRON_INGOT
+      B: STICK
+
+# ── Vampire Sword ────────────────────────────────────────────
+# Default shape (Redstone cross, Blaze Rod center):
+#   AIR      REDSTONE  AIR
+#   REDSTONE BLAZE_ROD REDSTONE
+#   AIR      REDSTONE  AIR
+vampire_sword:
+  recipe:
+    shape:
+      - " A "
+      - "ABA"
+      - " A "
+    ingredients:
+      A: REDSTONE
+      B: BLAZE_ROD
+
+# ── Stun Axe ─────────────────────────────────────────────────
+# Default shape:
+#   NETHERITE_SCRAP NETHERITE_SCRAP NETHERITE_SCRAP
+#   AIR             NETHERITE_SCRAP AIR
+#   AIR             STICK           AIR
+stun_axe:
+  recipe:
+    shape:
+      - "AAA"
+      - " A "
+      - " B "
+    ingredients:
+      A: NETHERITE_SCRAP
+      B: STICK
+
+# ── Thunder Trident ──────────────────────────────────────────
+# Default shape:
+#   TRIDENT TRIDENT       TRIDENT
+#   AIR     LIGHTNING_ROD AIR
+#   AIR     BLAZE_ROD     AIR
+thunder_trident:
+  recipe:
+    shape:
+      - "AAA"
+      - " B "
+      - " C "
+    ingredients:
+      A: TRIDENT
+      B: LIGHTNING_ROD
+      C: BLAZE_ROD

@@ -3,7 +3,6 @@ package com.playergames.paper;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -85,82 +84,57 @@ public class BountyManager implements Listener {
     }
 
     /**
-     * Apply bounty effects to a player
+     * Apply bounty effects to a player based on their current bounty level.
+     * Level 1: Fire Resistance I + Speed I
+     * Level 2: Strength I
+     * Level 3: +5 hearts (max health 30)
+     * Level 4: Strength II
+     * Level 5: +10 hearts total (max health 40) + Glowing
      */
     private void applyBountyEffects(Player player) {
         BountyPlayer bp = getBountyPlayer(player);
-        int bounty = bp.getBounty();
+        int bounty = Math.min(bp.getBounty(), 5);
 
-        // Remove all existing bounty-related effects first
         removeBountyEffects(player);
 
-        if (bounty == 0) {
-            return;
-        }
+        if (bounty == 0) return;
 
-        // Apply effects based on bounty level
-        // Level 1: Fire Resistance I + Speed I
         if (bounty >= 1) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0, true, false));
             player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false));
         }
 
-        // Level 2: Strength I
         if (bounty >= 2) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, Integer.MAX_VALUE, 0, true, false));
         }
 
-        // Level 3: +5 Hearts (10 HP)
         if (bounty >= 3) {
-            addHealthModifier(player, 10.0);
+            Objects.requireNonNull(player.getAttribute(Attribute.MAX_HEALTH)).setBaseValue(30.0);
         }
 
-        // Level 4: Strength II
         if (bounty >= 4) {
-            // Remove Strength I and add Strength II
             player.removePotionEffect(PotionEffectType.STRENGTH);
             player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, Integer.MAX_VALUE, 1, true, false));
         }
 
-        // Level 5: +5 Hearts + Glowing
         if (bounty >= 5) {
-            addHealthModifier(player, 10.0);
+            Objects.requireNonNull(player.getAttribute(Attribute.MAX_HEALTH)).setBaseValue(40.0);
             player.setGlowing(true);
         }
     }
 
     /**
-     * Add health modifier to player
-     */
-    @SuppressWarnings("deprecation")
-    private void addHealthModifier(Player player, double healthAmount) {
-        AttributeModifier modifier = new AttributeModifier(
-            "bounty_health_" + UUID.randomUUID(),
-            healthAmount,
-            AttributeModifier.Operation.ADD_NUMBER
-        );
-        Objects.requireNonNull(player.getAttribute(Attribute.MAX_HEALTH)).addModifier(modifier);
-        
-        // Give the health immediately
-        player.setHealth(Math.min(player.getHealth() + healthAmount, player.getMaxHealth()));
-    }
-
-    /**
-     * Remove all bounty-related effects
+     * Remove all bounty-related effects and reset max health to normal (20 HP / 10 hearts).
      */
     private void removeBountyEffects(Player player) {
-        // Remove potion effects
         player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
         player.removePotionEffect(PotionEffectType.SPEED);
         player.removePotionEffect(PotionEffectType.STRENGTH);
-
-        // Remove glowing
         player.setGlowing(false);
 
-        // Remove health modifiers
         var attribute = player.getAttribute(Attribute.MAX_HEALTH);
         if (attribute != null) {
-            attribute.getModifiers().removeIf(mod -> mod.getName().startsWith("bounty_health_"));
+            attribute.setBaseValue(20.0);
         }
     }
 
@@ -202,28 +176,26 @@ public class BountyManager implements Listener {
 
         // Check if the victim was the killer's target (valid bounty kill)
         if (killerBp.getTargetId() != null && killerBp.getTargetId().equals(victim.getUniqueId())) {
-            // Killer killed their target - gain bounty
+            // Killer killed their target — gain bounty + take victim's bounty
             killerBp.incrementBounty();
             killerBp.incrementStreak();
-            
-            // Take victim's bounty
             int victimBounty = victimBp.getBounty();
             killerBp.setBounty(killerBp.getBounty() + victimBounty);
-            
+
             killer.sendMessage(Component.text("§a§lBOUNTY CLAIMED! §7You killed your target. Your bounty is now §e" + killerBp.getBounty() + "§7. Streak: §e" + killerBp.getStreak())
                 .color(NamedTextColor.GREEN));
 
-            // Victim becomes the killer's new hunter
+            // Reset victim: clear bounty, effects, and max health
+            victimBp.resetBounty();
+            removeBountyEffects(victim);
+
+            // Victim becomes the killer's new hunter; clear victim's relationships
             killerBp.setHunterId(victim.getUniqueId());
-            
-            // Clear victim's target and hunter since they died
             victimBp.setTargetId(null);
             victimBp.setHunterId(null);
-            
-            // Apply effects to killer
+
+            // Apply effects to killer and assign new target
             applyBountyEffects(killer);
-            
-            // Assign new target to killer if possible
             assignTarget(killer);
         }
         // Check if the victim was killed by their hunter

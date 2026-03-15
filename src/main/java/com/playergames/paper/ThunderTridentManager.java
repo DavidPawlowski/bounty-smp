@@ -2,9 +2,11 @@ package com.playergames.paper;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -12,6 +14,7 @@ import org.bukkit.entity.Trident;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
@@ -61,6 +64,11 @@ public class ThunderTridentManager implements Listener {
         if (meta != null) {
             meta.displayName(Component.text("Thunder Trident").color(NamedTextColor.YELLOW));
             meta.setCustomModelData(3001);
+            meta.lore(List.of(
+                Component.text("Left-click to strike lightning on your target.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                Component.text("Thrown trident calls lightning on hit.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+            ));
+            meta.addEnchant(Enchantment.LOYALTY, 3, true);
             trident.setItemMeta(meta);
         }
         return trident;
@@ -235,6 +243,18 @@ public class ThunderTridentManager implements Listener {
         }
     }
     
+    /**
+     * When a thrown Thunder Trident hits an entity, strike lightning at the impact point.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onTridentHit(ProjectileHitEvent event) {
+        if (!(event.getEntity() instanceof Trident trident)) return;
+        if (!isThunderTrident(trident.getItem())) return;
+        if (event.getHitEntity() == null) return;
+
+        trident.getWorld().strikeLightningEffect(event.getHitEntity().getLocation());
+    }
+
     /**
      * Handle crafting event - broadcast when Thunder Trident is crafted
      */

@@ -5,9 +5,10 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
@@ -25,12 +26,12 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Manages the Stun Axe weapon functionality
- * Right-clicking a player stuns them for 1 second with 10-second cooldown
+ * Manages the Stun Axe weapon functionality.
+ * Left-clicking a player stuns them for 1 second with 20-second cooldown.
  */
 public class StunAxeManager implements Listener {
     private static final String STUN_AXE_KEY = "stun_axe";
-    private static final long COOLDOWN_MILLIS = 10000L; // 10 seconds
+    private static final long COOLDOWN_MILLIS = 20000L; // 20 seconds
     private static final int STUN_DURATION_TICKS = 20; // 1 second (20 ticks per second)
     
     private final PGPlugin plugin;
@@ -60,6 +61,10 @@ public class StunAxeManager implements Listener {
         if (meta != null) {
             meta.displayName(Component.text("Stun Axe").color(NamedTextColor.YELLOW));
             meta.setCustomModelData(2001);
+            meta.lore(List.of(
+                Component.text("Left-click a player to stun them for 1 second.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                Component.text("20 second cooldown.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+            ));
             axe.setItemMeta(meta);
         }
         return axe;
@@ -187,60 +192,34 @@ public class StunAxeManager implements Listener {
     }
 
     /**
-     * Handle right-click to stun target player
+     * Handle left-click attack to stun the hit player.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        // Check if player is right-clicking with a Stun Axe
-        ItemStack item = event.getItem();
-        if (item == null || !isStunAxe(item)) {
-            return;
-        }
-        
-        // Check for cooldown
-        Player player = event.getPlayer();
-        UUID playerId = player.getUniqueId();
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player attacker)) return;
+        if (!(event.getEntity() instanceof Player target)) return;
+
+        ItemStack item = attacker.getInventory().getItemInMainHand();
+        if (!isStunAxe(item)) return;
+
+        UUID playerId = attacker.getUniqueId();
         long currentTime = System.currentTimeMillis();
-        
+
         Long lastUsed = cooldowns.get(playerId);
         if (lastUsed != null && (currentTime - lastUsed) < COOLDOWN_MILLIS) {
-            // Still on cooldown
             long remainingSeconds = (COOLDOWN_MILLIS - (currentTime - lastUsed)) / 1000;
-            player.sendMessage(Component.text("Stun Axe is on cooldown! Wait " + remainingSeconds + " seconds.").color(NamedTextColor.RED));
+            attacker.sendMessage(Component.text("Stun Axe is on cooldown! Wait " + remainingSeconds + " seconds.").color(NamedTextColor.RED));
             return;
         }
-        
-        // Get the target player (the entity the player is looking at)
-        org.bukkit.entity.Entity targetEntity = player.getTargetEntity(10);
-        
-        if (!(targetEntity instanceof Player)) {
-            player.sendMessage(Component.text("No player in sight to stun!").color(NamedTextColor.RED));
-            return;
-        }
-        
-        Player target = (Player) targetEntity;
-        
-        // Cannot stun yourself
-        if (target.getUniqueId().equals(playerId)) {
-            player.sendMessage(Component.text("You cannot stun yourself!").color(NamedTextColor.RED));
-            return;
-        }
-        
-        // Apply stun effect - use SLOWNESS to simulate stun (immobilizes player)
-        // Using slowness 255 for 1 second makes it very difficult to move
+
+        // Apply stun: Slowness 255 immobilises, Weakness prevents attacking
         target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, STUN_DURATION_TICKS, 255, true, true));
-        // Also add weakness to prevent attacking while stunned
         target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, STUN_DURATION_TICKS, 10, true, true));
-        
-        // Set cooldown
+
         cooldowns.put(playerId, currentTime);
-        
-        // Send feedback
-        player.sendMessage(Component.text("You stunned " + target.getName() + " for 1 second!").color(NamedTextColor.YELLOW));
-        target.sendMessage(Component.text("You have been stunned by " + player.getName() + "!").color(NamedTextColor.RED));
-        
-        // Cancel the event to prevent conflicts with other right-click handlers
-        event.setCancelled(true);
+
+        attacker.sendMessage(Component.text("You stunned " + target.getName() + " for 1 second!").color(NamedTextColor.YELLOW));
+        target.sendMessage(Component.text("You have been stunned by " + attacker.getName() + "!").color(NamedTextColor.RED));
     }
     
     /**

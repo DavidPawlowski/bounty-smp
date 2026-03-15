@@ -2,6 +2,7 @@ package com.playergames.paper;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -57,6 +58,10 @@ public class ChargedMaceManager implements Listener {
         if (meta != null) {
             meta.displayName(Component.text("Charged Mace").color(NamedTextColor.AQUA));
             meta.setCustomModelData(1);
+            meta.lore(List.of(
+                Component.text("Right-click to launch a Wind Charge.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                Component.text("5 second cooldown.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+            ));
             mace.setItemMeta(meta);
         }
         return mace;

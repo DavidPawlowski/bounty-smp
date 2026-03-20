@@ -2,6 +2,8 @@ package com.playergames.paper;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -9,6 +11,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Arrays;
 
@@ -63,6 +67,9 @@ public final class PGPlugin extends JavaPlugin implements CommandExecutor {
         // Load saved recipes from config.yml (Charge Bow recipe)
         loadRecipesFromConfig();
 
+        // Register vanilla recipe overrides
+        registerVanillaOverrides();
+
         // Register quit listener to clean up all per-player data
         getServer().getPluginManager().registerEvents(new Listener() {
             @EventHandler
@@ -84,6 +91,36 @@ public final class PGPlugin extends JavaPlugin implements CommandExecutor {
         }
 
         getLogger().info("Bounty SMP enabled! Systems: Bounty, Charged Mace, Vampire Sword, Stun Axe, Thunder Trident, Charge Bow");
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  Vanilla recipe overrides
+    // ════════════════════════════════════════════════════════════════════
+
+    private void registerVanillaOverrides() {
+        // Golden Apple override — require gold nuggets instead of gold ingots
+        getServer().removeRecipe(new NamespacedKey("minecraft", "golden_apple"));
+        ShapedRecipe goldenApple = new ShapedRecipe(new NamespacedKey(this, "golden_apple_override"), new ItemStack(Material.GOLDEN_APPLE));
+        goldenApple.shape(" G ", "GAG", " G ");
+        goldenApple.setIngredient('G', Material.GOLD_NUGGET);
+        goldenApple.setIngredient('A', Material.APPLE);
+        getServer().addRecipe(goldenApple);
+
+        // Shulker Box override — require diamonds instead of shulker shells
+        getServer().removeRecipe(new NamespacedKey("minecraft", "shulker_box"));
+        ShapedRecipe shulkerBox = new ShapedRecipe(new NamespacedKey(this, "shulker_box_override"), new ItemStack(Material.SHULKER_BOX));
+        shulkerBox.shape("DDD", "DCD", "DDD");
+        shulkerBox.setIngredient('D', Material.DIAMOND);
+        shulkerBox.setIngredient('C', Material.CHEST);
+        getServer().addRecipe(shulkerBox);
+
+        // Cobweb recipe — no vanilla recipe exists
+        ShapedRecipe cobweb = new ShapedRecipe(new NamespacedKey(this, "cobweb_recipe"), new ItemStack(Material.COBWEB));
+        cobweb.shape("S S", " S ", "S S");
+        cobweb.setIngredient('S', Material.STRING);
+        getServer().addRecipe(cobweb);
+
+        getLogger().info("Vanilla overrides registered: golden_apple, shulker_box, cobweb");
     }
 
     // ════════════════════════════════════════════════════════════════════

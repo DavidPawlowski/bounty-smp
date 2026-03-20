@@ -61,7 +61,14 @@ public class BountyManager implements Listener {
         // Pick a random target
         Random random = new Random();
         Player target = availableTargets.get(random.nextInt(availableTargets.size()));
-        
+
+        // Safety guard — should never trigger given the filter above, but belt-and-suspenders
+        if (target.getUniqueId().equals(player.getUniqueId())) {
+            plugin.getLogger().warning("[Bounty] Self-target detected and blocked for " + player.getName());
+            bp.setTargetId(null);
+            return;
+        }
+
         bp.setTargetId(target.getUniqueId());
         
         // Set the player as the target's hunter
@@ -166,12 +173,23 @@ public class BountyManager implements Listener {
             return;
         }
 
+        BountyPlayer victimBp = getBountyPlayer(victim);
+
+        // Capture state before reset
+        int victimBounty = victimBp.getBounty();
+        UUID victimHunterId = victimBp.getHunterId();
+
+        // Always reset victim on any death (PvP or otherwise)
+        victimBp.resetBounty();
+        removeBountyEffects(victim);
+        victimBp.setTargetId(null);
+        victimBp.setHunterId(null);
+
         Player killer = victim.getKiller();
         if (killer == null) {
             return;
         }
 
-        BountyPlayer victimBp = getBountyPlayer(victim);
         BountyPlayer killerBp = getBountyPlayer(killer);
 
         // Check if the victim was the killer's target (valid bounty kill)
@@ -179,52 +197,32 @@ public class BountyManager implements Listener {
             // Killer killed their target — gain bounty + take victim's bounty
             killerBp.incrementBounty();
             killerBp.incrementStreak();
-            int victimBounty = victimBp.getBounty();
             killerBp.setBounty(killerBp.getBounty() + victimBounty);
 
             killer.sendMessage(Component.text("§a§lBOUNTY CLAIMED! §7You killed your target. Your bounty is now §e" + killerBp.getBounty() + "§7. Streak: §e" + killerBp.getStreak())
                 .color(NamedTextColor.GREEN));
 
-            // Reset victim: clear bounty, effects, and max health
-            victimBp.resetBounty();
-            removeBountyEffects(victim);
-
-            // Victim becomes the killer's new hunter; clear victim's relationships
+            // Victim becomes the killer's new hunter
             killerBp.setHunterId(victim.getUniqueId());
-            victimBp.setTargetId(null);
-            victimBp.setHunterId(null);
 
             // Apply effects to killer and assign new target
             applyBountyEffects(killer);
             assignTarget(killer);
         }
-        // Check if the victim was killed by their hunter
-        else if (victimBp.getHunterId() != null && victimBp.getHunterId().equals(killer.getUniqueId())) {
+        // Check if the victim was killed by their hunter (using captured value)
+        else if (victimHunterId != null && victimHunterId.equals(killer.getUniqueId())) {
             // Victim was killed by their hunter - lose all bounty
-            int lostBounty = victimBp.getBounty();
-            victimBp.resetBounty();
-            
-            victim.sendMessage(Component.text("§c§lHUNTED DOWN! §7You were killed by your hunter and lost all your bounty (§e" + lostBounty + "§7).")
+            victim.sendMessage(Component.text("§c§lHUNTED DOWN! §7You were killed by your hunter and lost all your bounty (§e" + victimBounty + "§7).")
                 .color(NamedTextColor.RED));
-            
-            // Remove effects from victim
-            removeBountyEffects(victim);
 
             // Hunter gains 1 bounty
-            BountyPlayer hunterBp = getBountyPlayer(killer);
-            hunterBp.incrementBounty();
-            
-            killer.sendMessage(Component.text("§a§lHUNT SUCCESSFUL! §7You killed your prey. Their bounty has been added to yours. Total: §e" + hunterBp.getBounty())
+            killerBp.incrementBounty();
+
+            killer.sendMessage(Component.text("§a§lHUNT SUCCESSFUL! §7You killed your prey. Their bounty has been added to yours. Total: §e" + killerBp.getBounty())
                 .color(NamedTextColor.GREEN));
-            
-            // Apply effects to hunter
+
+            // Apply effects to hunter and assign new target
             applyBountyEffects(killer);
-            
-            // Clear victim's target and hunter
-            victimBp.setTargetId(null);
-            victimBp.setHunterId(null);
-            
-            // Assign new target to hunter
             assignTarget(killer);
         }
     }

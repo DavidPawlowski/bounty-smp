@@ -214,7 +214,7 @@ public class StunAxeManager implements Listener {
 
         // Apply stun: Slowness 255 immobilises, Weakness prevents attacking
         target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, STUN_DURATION_TICKS, 255, true, true));
-        target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, STUN_DURATION_TICKS, 10, true, true));
+        target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, STUN_DURATION_TICKS, 255, true, true));
 
         cooldowns.put(playerId, currentTime);
 

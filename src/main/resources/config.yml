@@ -22,78 +22,98 @@
 # ═══════════════════════════════════════════════════════════
 
 # ── Charge Bow ──────────────────────────────────────────────
-# Default shape:
-#   BONE  AIR       BONE
-#   BONE  ENDER_EYE BONE
-#   AIR   STICK     AIR
+# Shape:
+#   PLAYER_HEAD  DRAGON_HEAD  PLAYER_HEAD
+#   ELYTRA       BOW          ELYTRA
+#   PLAYER_HEAD  DRAGON_HEAD  PLAYER_HEAD
 chargebow:
   recipe:
     shape:
-      - "A A"
       - "ABA"
-      - " C "
+      - "CDC"
+      - "EFE"
     ingredients:
-      A: BONE
-      B: ENDER_EYE
-      C: STICK
+      A: PLAYER_HEAD
+      B: DRAGON_HEAD
+      C: ELYTRA
+      D: BOW
+      E: PLAYER_HEAD
+      F: DRAGON_HEAD
 
 # ── Charged Mace ────────────────────────────────────────────
-# Default shape:
-#   IRON_INGOT IRON_INGOT IRON_INGOT
-#   AIR        IRON_INGOT AIR
-#   AIR        STICK      AIR
+# Shape:
+#   OMINOUS_TRIAL_KEY OMINOUS_TRIAL_KEY OMINOUS_TRIAL_KEY
+#   EYE_OF_ENDER      HEAVY_CORE        OMINOUS_BANNER
+#   BREEZE_ROD        BREEZE_ROD        BREEZE_ROD
 charged_mace:
   recipe:
     shape:
       - "AAA"
-      - " A "
-      - " B "
+      - "EHB"
+      - "CCC"
     ingredients:
-      A: IRON_INGOT
-      B: STICK
+      A: OMINOUS_TRIAL_KEY
+      E: EYE_OF_ENDER
+      H: HEAVY_CORE
+      B: OMINOUS_BANNER
+      C: BREEZE_ROD
 
 # ── Vampire Sword ────────────────────────────────────────────
-# Default shape (Redstone cross, Blaze Rod center):
-#   AIR      REDSTONE  AIR
-#   REDSTONE BLAZE_ROD REDSTONE
-#   AIR      REDSTONE  AIR
+# Shape:
+#   NETHERRACK    PLAYER_HEAD   NETHER_WART
+#   NETHERITE_INGOT DIAMOND_SWORD NETHERITE_INGOT
+#   DIAMOND_BLOCK PLAYER_HEAD   DIAMOND_BLOCK
 vampire_sword:
   recipe:
     shape:
-      - " A "
-      - "ABA"
-      - " A "
+      - "ABC"
+      - "DED"
+      - "FBF"
     ingredients:
-      A: REDSTONE
-      B: BLAZE_ROD
+      A: NETHERRACK
+      B: PLAYER_HEAD
+      C: NETHER_WART
+      D: NETHERITE_INGOT
+      E: DIAMOND_SWORD
+      F: DIAMOND_BLOCK
 
 # ── Stun Axe ─────────────────────────────────────────────────
-# Default shape:
-#   NETHERITE_SCRAP NETHERITE_SCRAP NETHERITE_SCRAP
-#   AIR             NETHERITE_SCRAP AIR
-#   AIR             STICK           AIR
+# Shape:
+#   SPECTRAL_ARROW  BOLT_ARMOR_TRIM_SMITHING_TEMPLATE  SPECTRAL_ARROW
+#   TURTLE_SCUTE    DIAMOND_AXE                        TURTLE_SCUTE
+#   EMERALD_ORE     EYE_ARMOR_TRIM_SMITHING_TEMPLATE   EMERALD_ORE
 stun_axe:
   recipe:
     shape:
-      - "AAA"
-      - " A "
-      - " B "
+      - "ABC"
+      - "DED"
+      - "FGF"
     ingredients:
-      A: NETHERITE_SCRAP
-      B: STICK
+      A: SPECTRAL_ARROW
+      B: BOLT_ARMOR_TRIM_SMITHING_TEMPLATE
+      C: SPECTRAL_ARROW
+      D: TURTLE_SCUTE
+      E: DIAMOND_AXE
+      F: EMERALD_ORE
+      G: EYE_ARMOR_TRIM_SMITHING_TEMPLATE
 
 # ── Thunder Trident ──────────────────────────────────────────
-# Default shape:
-#   TRIDENT TRIDENT       TRIDENT
-#   AIR     LIGHTNING_ROD AIR
-#   AIR     BLAZE_ROD     AIR
+# Shape:
+#   DIAMOND_BLOCK  PLAYER_HEAD  NETHER_STAR
+#   NETHERITE_BLOCK TRIDENT     NETHERITE_BLOCK
+#   NETHER_STAR    PLAYER_HEAD  NAUTILUS_SHELL
 thunder_trident:
   recipe:
     shape:
-      - "AAA"
-      - " B "
-      - " C "
+      - "ABC"
+      - "DED"
+      - "FGH"
     ingredients:
-      A: TRIDENT
-      B: LIGHTNING_ROD
-      C: BLAZE_ROD
+      A: DIAMOND_BLOCK
+      B: PLAYER_HEAD
+      C: NETHER_STAR
+      D: NETHERITE_BLOCK
+      E: TRIDENT
+      F: NETHER_STAR
+      G: PLAYER_HEAD
+      H: NAUTILUS_SHELL
